@@ -133,7 +133,7 @@ public:
      * @throws ConnectionFailedException connection attempt failed.
      * @throws UnknownErrorCodeException unknown error code returned.
      */
-    bool Connect(std::string port, int baudrate=115200, long timeout=0);
+    bool Connect(std::string port, int baudrate=115200, long timeout=50);
 
    /*!
     * Disconnects from the serial port

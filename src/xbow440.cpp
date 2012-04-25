@@ -1,42 +1,51 @@
 
-#include "xbow440.h"
+#include "xbow440/xbow440.h"
 using namespace xbow440;
 
 
 XBOW440::XBOW440()
 {	
-	serialPort=NULL;
-	readSize=31; // initially set to size of the largest packet
-	bReading=false;
+	serial_port_=NULL;
+	data_handler_=NULL;
+	read_size_=31; // initially set to size of the largest packet
+	reading_status_=false;
 }
-    
-void XBOW440::connect(std::string port, int baudrate, long timeout) {
-	serialPort = new Serial(port,baudrate,timeout);
 
-	if (~serialPort->isOpen()){
+bool XBOW440::Connect(std::string port, int baudrate, long timeout) {
+	serial_port_ = new serial::Serial(port,baudrate,timeout);
+
+	if (~serial_port_->isOpen()){
 		std::cout << "Serial port: " << port << " failed to open." << std::endl;
-		delete serialPort;
-		serialPort=NULL;
-		return;
+		delete serial_port_;
+		serial_port_ = NULL;
+		return false;
 	}
 
 	// look for Xbow by sending ping and waiting for response
-	if (!ping()){
+	if (!Ping()){
 		std::cout << "Xbow440 not found on port: " << port << std::endl;
-		delete serialPort;
-		serialPort=NULL;
-		return;
+		delete serial_port_;
+		serial_port_ = NULL;
+		return false;
 	}
 
 	// start reading
-	start_reading();
+	StartReading();
+	return true;
 }
 
-bool XBOW440::ping(int numAttempts, long timeout) {
+void XBOW440::Disconnect() {
+	StopReading();
+	serial_port_->close();
+	delete serial_port_;
+	serial_port_=NULL;
+}
+
+bool XBOW440::Ping(int numAttempts, long timeout) {
 	// get the current timeout period
-	long origTimeout=serialPort->getTimeoutMilliseconds();
+	long origTimeout=serial_port_->getTimeoutMilliseconds();
 	// set new timeout
-	serialPort->setTimeoutMilliseconds(timeout);
+	serial_port_->setTimeoutMilliseconds(timeout);
 
 	std::string result="";
 	size_t found=string::npos;
@@ -44,79 +53,76 @@ bool XBOW440::ping(int numAttempts, long timeout) {
 	// ping the Xbow and wait for a response
 	while (numAttempts-->0){
 		// send ping
-		serialPort->write("UUPK");
+		serial_port_->write("UUPK");
 		// wait for response
-		result=serialPort->read_until("PK");
+		result=serial_port_->read_until("PK");
 
 		// see if we got a ping response or a timeout
 		found=result.find("PK");
 		if (found!=string::npos) {
-			serialPort->setTimeoutMilliseconds(origTimeout);
+			serial_port_->setTimeoutMilliseconds(origTimeout);
 			return true;
 		}
 	}
 
 	// reset to original timeout
-	serialPort->setTimeoutMilliseconds(origTimeout);
+	serial_port_->setTimeoutMilliseconds(origTimeout);
 
 	// no reponse found
 	return false;
 }
 
-bool XBOW440::start_reading() {
+void XBOW440::StartReading() {
 	// create thread to read from sensor
-	bReading=true;
-	mReadThread = boost::shared_ptr<boost::thread > (new boost::thread(boost::bind(&XBOW440::read_thread, this)));
-	return true;
+	reading_status_=true;
+	read_thread_ptr_ = boost::shared_ptr<boost::thread > (new boost::thread(boost::bind(&XBOW440::ReadSerialPort, this)));
 }
 
-bool XBOW440::stop_reading() {
-	bReading=false;
-	return true;
+void XBOW440::StopReading() {
+	reading_status_=false;
 }
 
-void XBOW440::read_thread() {
+void XBOW440::ReadSerialPort() {
 	char buffer[31];
 	size_t len;
 
-	resync();
+	Resync();
 
-	while (bReading) {
-		len = serialPort->read(buffer, readSize);
+	while (reading_status_) {
+		len = serial_port_->read(buffer, read_size_);
 
 		// check for header and first of packet type
 		if ((buffer[0]!='U')&&(buffer[1]!='U')&&(buffer[2]!=0x53)) {
-			resync();
+			Resync();
 			continue;
 		}
 
 		// parse packet
-		parse(buffer+6, buffer[3]);
-		
-
+		Parse(buffer+6, buffer[3]);
 	}
 
 }
 
-void XBOW440::resync() {
+void XBOW440::Resync() {
+	static const unsigned int kMaximumMessageSize = 256;
 	std::string result="";
 	size_t found=string::npos;
 	bool synced=false;
-	char data[MAX_MSG_SIZE];
+	char data[kMaximumMessageSize];
 
 	// make up to 5 attempts to resync
 	for (int ii=0; ii<5; ii++){
 		std::cout << "Resyncing.  Attempt # " << (ii+1) << " of 5." << std::endl;
-		result=serialPort->read_until("PK");
+		result=serial_port_->read_until("PK");
 		found=result.find("PK");
 		if (found!=string::npos){
 			
-			size_t len = serialPort->read(data,3);
+			size_t len = serial_port_->read(data,3);
 			if (len<3)
 				continue;
 			size_t dataSize = data[2];
-			readSize = dataSize+7;
-			len = serialPort->read(data,dataSize+2);
+			read_size_ = dataSize+7;
+			len = serial_port_->read(data,dataSize+2);
 			if (len==dataSize+2) {
 				synced=true;
 				break;
@@ -128,17 +134,17 @@ void XBOW440::resync() {
 		std::cout << "Successfully synchronized." << std::endl;
 	} else {
 		std::cout << "Failed to synchronize. Stopping sensor." << std::endl;
-		stop_reading();
-		disconnect();
+		StopReading();
+		Disconnect();
 	}
 }
 
-void XBOW440::SoftwareReset()
+/*void XBOW440::SoftwareReset()
 {
-	if (serialPort==NULL)
+	if (serial_port_==NULL)
 		return;
 
-	if (!serialPort->isOpen())
+	if (!serial_port_->isOpen())
 		return;
 
 	char msgToSend[7];
@@ -154,63 +160,72 @@ void XBOW440::SoftwareReset()
 	msgToSend[6]=0x4f;
 
 	// send command to device
-	serialPort->write(msgToSend,7);
-}
+	serial_port_->write(msgToSend,7);
+} */
 
-void XBOW440::parse(char *data, unsigned short packet_type) {
+void XBOW440::Parse(char *data, unsigned short packet_type) {
     
+	// scale factors for converting raw data
+	static const double kAccelerometerScaleFactorS1 = 0.002992752075195; // scale for m/s^2
+	static const double kGyroscopeScaleFactorS1 = 0.000335558297349984; // scale for rad/s
+	static const double kTemperatureScaleFactorS1 = 0.0030517578125;
+	static const double kAccelerometerScaleFactorS2 = 0.00000004656612873077393;
+	static const double kGyroscopeScaleFactorS2 = 0.000000005120213277435059;
+
+	// TODO: check CRC
+
     switch (packet_type) {
 	case 0x31: //S1 Payload
 
-	    imudata.datatype=packet_type;
+	    imu_data_.datatype=packet_type;
 
 	    s1contents.cdata[0] = data[1];
 	    s1contents.cdata[1] = data[0];
-	    imudata.ax = s1contents.ssdata*S1_ACCEL_SCALE;
+	    imu_data_.ax = s1contents.ssdata*kAccelerometerScaleFactorS1;
 
 	    s1contents.cdata[0] = data[3];
 	    s1contents.cdata[1] = data[2];
-	    imudata.ay = s1contents.ssdata*S1_ACCEL_SCALE;
+	    imu_data_.ay = s1contents.ssdata*kAccelerometerScaleFactorS1;
 
 	    s1contents.cdata[0] = data[5];
 	    s1contents.cdata[1] = data[4];
-	    imudata.az = s1contents.ssdata*S1_ACCEL_SCALE;
+	    imu_data_.az = s1contents.ssdata*kAccelerometerScaleFactorS1;
 
 	    s1contents.cdata[0] = data[7];
 	    s1contents.cdata[1] = data[6];
-	    imudata.rollrate = s1contents.ssdata*S1_GYRO_SCALE;
+	    imu_data_.rollrate = s1contents.ssdata*kGyroscopeScaleFactorS1;
 
 	    s1contents.cdata[0] = data[9];
 	    s1contents.cdata[1] = data[8];
-	    imudata.pitchrate = s1contents.ssdata*S1_GYRO_SCALE;
+	    imu_data_.pitchrate = s1contents.ssdata*kGyroscopeScaleFactorS1;
 
 	    s1contents.cdata[0] = data[11];
 	    s1contents.cdata[1] = data[10];
-	    imudata.yawrate = s1contents.ssdata*S1_GYRO_SCALE;
+	    imu_data_.yawrate = s1contents.ssdata*kGyroscopeScaleFactorS1;
 
 	    s1contents.cdata[0] = data[13];
 	    s1contents.cdata[1] = data[12];
-	    imudata.xtemp = s1contents.ssdata*S1_TEMP_SCALE;
+	    imu_data_.xtemp = s1contents.ssdata*kTemperatureScaleFactorS1;
 
 	    s1contents.cdata[0] = data[15];
 	    s1contents.cdata[1] = data[14];
-	    imudata.ytemp = s1contents.ssdata*S1_TEMP_SCALE;
+	    imu_data_.ytemp = s1contents.ssdata*kTemperatureScaleFactorS1;
 
 	    s1contents.cdata[0] = data[17];
 	    s1contents.cdata[1] = data[16];
-	    imudata.ztemp = s1contents.ssdata*S1_TEMP_SCALE;
+	    imu_data_.ztemp = s1contents.ssdata*kTemperatureScaleFactorS1;
 
 	    s1contents.cdata[0] = data[19];
 	    s1contents.cdata[1] = data[18];
-	    imudata.boardtemp = s1contents.ssdata*S1_TEMP_SCALE;
+	    imu_data_.boardtemp = s1contents.ssdata*kTemperatureScaleFactorS1;
 
 	    s1contents.cdata[0] = data[21];
 	    s1contents.cdata[1] = data[20];
-	    imudata.counter = s1contents.usdata;
+	    imu_data_.counter = s1contents.usdata;
 
 	    s1contents.cdata[0] = data[23];
 	    s1contents.cdata[1] = data[22];
-	    imudata.bitstatus = s1contents.usdata;
+	    imu_data_.bitstatus = s1contents.usdata;
 
 	    break;
 
@@ -220,49 +235,49 @@ void XBOW440::parse(char *data, unsigned short packet_type) {
 	    s2contents.cdata[1] = data[2];
 	    s2contents.cdata[2] = data[1];
 	    s2contents.cdata[3] = data[0];
-	    imudata.ax = s2contents.sidata*S2_ACCEL_SCALE;
+	    imu_data_.ax = s2contents.sidata*kAccelerometerScaleFactorS2;
 
 	    s2contents.cdata[0] = data[7];
 	    s2contents.cdata[1] = data[6];
 	    s2contents.cdata[2] = data[5];
 	    s2contents.cdata[3] = data[4];
-	    imudata.ay = s2contents.sidata*S2_ACCEL_SCALE;
+	    imu_data_.ay = s2contents.sidata*kAccelerometerScaleFactorS2;
 
 	    s2contents.cdata[0] = data[11];
 	    s2contents.cdata[1] = data[10];
 	    s2contents.cdata[2] = data[9];
 	    s2contents.cdata[3] = data[8];
-	    imudata.az = s2contents.sidata*S2_ACCEL_SCALE;
+	    imu_data_.az = s2contents.sidata*kAccelerometerScaleFactorS2;
 
 	    s2contents.cdata[0] = data[15];
 	    s2contents.cdata[1] = data[14];
 	    s2contents.cdata[2] = data[13];
 	    s2contents.cdata[3] = data[12];
-	    imudata.rollrate = s2contents.sidata*S2_GYRO_SCALE;
+	    imu_data_.rollrate = s2contents.sidata*kGyroscopeScaleFactorS2;
 
 	    s2contents.cdata[0] = data[19];
 	    s2contents.cdata[1] = data[18];
 	    s2contents.cdata[2] = data[17];
 	    s2contents.cdata[3] = data[16];
-	    imudata.pitchrate = s2contents.sidata*S2_GYRO_SCALE;
+	    imu_data_.pitchrate = s2contents.sidata*kGyroscopeScaleFactorS2;
 
 	    s2contents.cdata[0] = data[23];
 	    s2contents.cdata[1] = data[22];
 	    s2contents.cdata[2] = data[21];
 	    s2contents.cdata[3] = data[20];
-	    imudata.yawrate = s2contents.sidata*S2_GYRO_SCALE;
+	    imu_data_.yawrate = s2contents.sidata*kGyroscopeScaleFactorS2;
 
 	    s2contents.cdata[0] = data[25];
 	    s2contents.cdata[1] = data[24];
 	    s2contents.cdata[2] = '0';
 	    s2contents.cdata[3] = '0';
-	    imudata.counter = s2contents.usdata;
+	    imu_data_.counter = s2contents.usdata;
 
 	    s2contents.cdata[0] = data[27];
 	    s2contents.cdata[1] = data[26];
 	    s2contents.cdata[2] = '0';
 	    s2contents.cdata[3] = '0';
-	    imudata.bitstatus = s2contents.usdata;
+	    imu_data_.bitstatus = s2contents.usdata;
 
 	    break;
 	default:
@@ -270,10 +285,12 @@ void XBOW440::parse(char *data, unsigned short packet_type) {
     }
 
     // call callback with data
+    if (data_handler_!=NULL)
+    	data_handler_(imu_data_);
     
 }
 
-bool XBOW440::SetOutputRate(unsigned short rate) {
+/*bool XBOW440::SetOutputRate(unsigned short rate) {
 
 	if (serialPort==NULL)
 		return false;
@@ -309,7 +326,7 @@ bool XBOW440::SetOutputRate(unsigned short rate) {
 	//cout << dec << queueOutRate.count << " : " << queueOutRate.front << endl;
 	serialPort->write(msgToSend,12);
 	return true;
-}
+}*/
 
 /*******************************************************************************
 * FUNCTION: calcCRC calculates a 2-byte CRC on serial data using
@@ -320,7 +337,7 @@ bool XBOW440::SetOutputRate(unsigned short rate) {
 * num is offset into buffer where to stop CRC calculation
 * RETURNS: 2-byte CRC
 *******************************************************************************/
-unsigned short XBOW440::calcCRC(char* data, int length){
+unsigned short XBOW440::CalculateCRC(char* data, int length){
     unsigned int i = 0, j = 0;
     unsigned short crc = 0x1D0F; //non-augmented inital value equivalent to augmented initial value 0xFFFF
 	// calculate crc on remainder of packet

@@ -42,7 +42,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # Add default source files
 set(XBOW_SRCS src/xbow440.cpp)
 # Add default header files
-set(XBOW_HEADERS include/xbow440.h)
+set(XBOW_HEADERS include/xbow440/xbow440.h)
 
 # Find Boost, if it hasn't already been found
 IF(NOT Boost_FOUND OR NOT Boost_SYSTEM_FOUND OR NOT Boost_FILESYSTEM_FOUND OR NOT Boost_THREAD_FOUND)
@@ -68,7 +68,7 @@ else(serial_FOUND)
   message(FATAL_ERROR "Serial library was not found.")
 endif(serial_FOUND)
 
-## Build the atrv Library
+## Build the xbow Library
 
 # Compile the Library
 add_library(xbow440 ${XBOW_SRCS} ${XBOW_HEADERS})
@@ -77,17 +77,17 @@ target_link_libraries(xbow440 ${XBOW_LINK_LIBS})
 ## Build Examples
 
 # If asked to
-IF(XBOW_BUILD_EXAMPLES)
+IF(XBOW440_BUILD_EXAMPLES)
     # Compile the atrv Test program
-    add_executable(xbow_example examples/xbow_example.cpp)
+    add_executable(xbow440_example examples/xbow440_example.cpp)
     # Link the Test program to the atrv library
-    target_link_libraries(xbow_example xbow)
-ENDIF(XBOW_BUILD_EXAMPLES)
+    target_link_libraries(xbow440_example xbow440)
+ENDIF(XBOW440_BUILD_EXAMPLES)
 
 ## Build tests
 
 # If asked to
-IF(XBOW_BUILD_TESTS)
+IF(XBOW440_BUILD_TESTS)
     # Find Google Test
     enable_testing()
     find_package(GTest REQUIRED)
@@ -97,10 +97,10 @@ IF(XBOW_BUILD_TESTS)
     add_executable(xbow_tests tests/xbow_tests.cpp)
     # Link the Test program to the atrv library
     target_link_libraries(xbow_tests ${GTEST_BOTH_LIBRARIES}
-                          xbow)
+                          xbow440)
 
     add_test(AllTestsIntest_xbow xbow_tests)
-ENDIF(XBOW_BUILD_TESTS)
+ENDIF(XBOW440_BUILD_TESTS)
 
 ## Setup install and uninstall
 
@@ -117,8 +117,8 @@ IF(NOT XBOW_DONT_CONFIGURE_INSTALL)
       ARCHIVE DESTINATION lib
     )
     
-    INSTALL(FILES include/Xbow440.h
-            DESTINATION include)
+    INSTALL(FILES include/xbow440/Xbow440.h
+            DESTINATION include/xbow440)
     
     IF(NOT CMAKE_FIND_INSTALL_PATH)
         set(CMAKE_FIND_INSTALL_PATH ${CMAKE_ROOT})

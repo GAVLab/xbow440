@@ -1,24 +1,32 @@
 #include <string>
 #include <iostream>
+#include <sstream>
 
-#include "mdc2250/mdc2250.h"
-using namespace mdc2250;
+#include "xbow440/xbow440.h"
+using namespace xbow440;
 using namespace std;
+
+
+void ProcessData(const ImuData& data) {
+    cout << "Received data. ax: " << data.ax << " ay: " << 
+        data.ay << " az: " << data.az << std::endl;
+
+};
 
 int main(int argc, char **argv)
 {
-    if(argc < 2) {
-        std::cerr << "Usage: mdc2250_example <serial port address>" << std::endl;
+    if(argc < 3) {
+        std::cerr << "Usage: xbow440_example <serial port address> <baud rate>" << std::endl;
         return 0;
     }
     std::string port(argv[1]);
+    int baudrate=38400;
+    istringstream(argv[2]) >> baudrate;
 
-    std::cout << "WARNING: This example moves the ATRV. \n Do you wish to continue (Y or N)?" << std::endl;
-    char reply;
-    std::cin >> reply;
 
-    MDC2250 myMDC;
-    bool result = myMDC.connect(port);
+    XBOW440 my_xbow;
+    bool result = my_xbow.Connect(port,baudrate);
+    my_xbow.set_data_handler(&ProcessData);
 
     if (result) {
         cout << "Successfully connected." << endl;
@@ -28,45 +36,9 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    // set up encoder
-    myMDC.setEncoderPPR(1,500);
-    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-    myMDC.setEncoderPPR(2,500);
-
-    // set up to read BA, FF, S, CR
-    myMDC.sendCommand("\r# C_?BA_?FF_?S_?C_# 200\r");
-    myMDC.startContinuousReading();
-
-    if (reply=='Y') {
-
-        // run motor
-        for (int ii=0; ii<20; ii++)
-        {
-            //std::cout << ii << std::endl;
-            myMDC.multiMotorCmd(400,400);
-            boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-        }
-        for (int ii=0; ii<20; ii++)
-        {
-            //std::cout << ii << std::endl;
-            myMDC.multiMotorCmd(100,100);
-            boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-        }
-        for (int ii=0; ii<20; ii++)
-        {
-            //std::cout << ii << std::endl;
-            myMDC.multiMotorCmd(400,400);
-            boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-        }
-
-        myMDC.multiMotorCmd(0,0);
-    } else {
-        std::cout << "Running without motion." << std::endl;
-    }
-
     while(1);
 
-    myMDC.disconnect();
+    my_xbow.Disconnect();
 
     return 0;
 }

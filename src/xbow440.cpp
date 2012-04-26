@@ -102,7 +102,7 @@ void XBOW440::ReadSerialPort() {
 		}
 
 		// parse packet
-		Parse(buffer+6, buffer[3]);
+		Parse(buffer+5, buffer[3]);
 	}
 
 }
@@ -117,9 +117,9 @@ void XBOW440::Resync() {
 	// make up to 5 attempts to resync
 	for (int ii=0; ii<5; ii++){
 		std::cout << "Resyncing.  Attempt # " << (ii+1) << " of 5." << std::endl;
-		result=serial_port_->read_until("PK");
+		result=serial_port_->read_until("UU");
 		std::cout << "Read from Resync: " << result << std::endl;
-		found=result.find("PK");
+		found=result.find("UU");
 		if (found!=string::npos){
 			
 			size_t len = serial_port_->read(data,3);

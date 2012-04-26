@@ -2,11 +2,33 @@
 #include "xbow440/xbow440.h"
 using namespace xbow440;
 
+#define WIN32_LEAN_AND_MEAN 
+#include "boost/date_time/posix_time/posix_time.hpp"
+
+void DefaultProcessData(const ImuData& data) {
+    std::cout << "IMU440 Packet:" << std::endl;
+    std::cout << " Timestamp: " << data.receive_time;
+    std::cout << " IMU Temperature: " << data.boardtemp << std::endl;
+    std::cout << " Gyro Yaw: " << data.yawrate << std::endl;
+    std::cout << " Gyro Roll: " << data.rollrate << std::endl;
+    std::cout << " Gyro Pitch: " << data.pitchrate << std::endl;
+    std::cout << " Accel X: " << data.ax << std::endl;
+    std::cout << " Accel Y: " << data.ay << std::endl;
+    std::cout << " Accel Z: " << data.az << std::endl;
+    std::cout << std::endl;
+};
+
+double DefaultGetTime() {
+	boost::posix_time::ptime present_time(boost::posix_time::microsec_clock::universal_time());
+	boost::posix_time::time_duration duration(present_time.time_of_day());
+	return duration.total_milliseconds();
+};
 
 XBOW440::XBOW440()
 {	
 	serial_port_=NULL;
-	data_handler_=NULL;
+	data_handler_=DefaultProcessData;
+	time_callback_=DefaultGetTime;
 	read_size_=31; // initially set to size of the largest packet
 	reading_status_=false;
 }
@@ -85,11 +107,13 @@ void XBOW440::StopReading() {
 void XBOW440::ReadSerialPort() {
 	char buffer[31];
 	size_t len;
+	double time_stamp;
 
 	Resync();
 
 	while (reading_status_) {
 		len = serial_port_->read(buffer, read_size_);
+		imu_data_.receive_time = time_callback_();
 
 		// check for header and first of packet type
 		if ((buffer[0]!='U')&&(buffer[1]!='U')&&(buffer[2]!=0x53)) {

@@ -116,6 +116,9 @@ typedef boost::function<void(const std::string&)> LoggingCallback;
 typedef boost::function<void(const xbow440::ImuData&)> DataCallback;
 
 
+typedef boost::function<double()> GetTimeCallback;
+
+
 
 class XBOW440{
 public:
@@ -168,9 +171,12 @@ public:
     * \see xbow440::DataCallback
     */
     void set_data_handler(DataCallback data_handler) {
-    this->data_handler_ = data_handler;
+        this->data_handler_ = data_handler;
     }
 
+    void set_time_callback(GetTimeCallback time_callback) {
+        this->time_callback_ = time_callback;
+    }
 
     // NOT IMPLEMENTED YET
     //bool SetOutputRate(unsigned short rate); //!< set rate to 0, 1, 2, 5, 10, 20, 25, 50Hz
@@ -240,6 +246,7 @@ private:
     boost::shared_ptr<boost::thread> read_thread_ptr_;  
     bool reading_status_;  //!< True if the read thread is running, false otherwise.
     DataCallback data_handler_; //!< Function pointer to callback function for parsed data
+    GetTimeCallback time_callback_; //!< Function pointer to callback function for timestamping
 };
 
 }; // end namespace

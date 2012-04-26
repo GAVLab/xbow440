@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     XBOW440 my_xbow;
     bool result = my_xbow.Connect(port,baudrate);
-    my_xbow.set_data_handler(&ProcessData);
+    //my_xbow.set_data_handler(&ProcessData);
 
     if (result) {
         cout << "Successfully connected." << endl;

@@ -57,8 +57,6 @@ bool XBOW440::Ping(int numAttempts, long timeout) {
 		// wait for response
 		result=serial_port_->read_until("PK");
 
-		std::cout << "Read data from Ping: " << result << std::endl;
-
 		// see if we got a ping response or a timeout
 		found=result.find("PK");
 		if (found!=string::npos) {
@@ -93,8 +91,6 @@ void XBOW440::ReadSerialPort() {
 	while (reading_status_) {
 		len = serial_port_->read(buffer, read_size_);
 
-		std::cout << "Read " << len << " bytes." << std::endl;
-
 		// check for header and first of packet type
 		if ((buffer[0]!='U')&&(buffer[1]!='U')&&(buffer[2]!=0x53)) {
 			Resync();
@@ -118,7 +114,6 @@ void XBOW440::Resync() {
 	for (int ii=0; ii<5; ii++){
 		std::cout << "Resyncing.  Attempt # " << (ii+1) << " of 5." << std::endl;
 		result=serial_port_->read_until("UU");
-		std::cout << "Read from Resync: " << result << std::endl;
 		found=result.find("UU");
 		if (found!=string::npos){
 			

@@ -20,13 +20,13 @@ int main(int argc, char **argv)
         return 0;
     }
     std::string port(argv[1]);
-    int baudrate=38400;
+    int baudrate=57600;
     istringstream(argv[2]) >> baudrate;
 
 
     XBOW440 my_xbow;
     bool result = my_xbow.Connect(port,baudrate);
-    //my_xbow.set_data_handler(&ProcessData);
+    //my_xbow.set_data_handler(ProcessData);
 
     if (result) {
         cout << "Successfully connected." << endl;

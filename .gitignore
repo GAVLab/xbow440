@@ -1,12 +1,24 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-
-# Compiled Dynamic libraries
-*.so
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
+.*
+.DS_Store
+*.coverage
+*.egg-info
+*.log
+*.swp
+*.pyc
+*.pyo
+*.zip
+*/files/*
+*/tmp/*
+*.hwm*
+*.cfg
+.svn
+build
+bin
+lib
+cpp
+*/lib/*
+installed
+patched
+wiped
+msg_gen
+srv_gen

@@ -174,8 +174,8 @@ public:
         this->data_handler_ = data_handler;
     }
 
-    void set_time_callback(GetTimeCallback time_callback) {
-        this->time_callback_ = time_callback;
+    void set_time_handler(GetTimeCallback time_handler) {
+        this->time_handler_ = time_handler;
     }
 
     // NOT IMPLEMENTED YET
@@ -246,7 +246,7 @@ private:
     boost::shared_ptr<boost::thread> read_thread_ptr_;  
     bool reading_status_;  //!< True if the read thread is running, false otherwise.
     DataCallback data_handler_; //!< Function pointer to callback function for parsed data
-    GetTimeCallback time_callback_; //!< Function pointer to callback function for timestamping
+    GetTimeCallback time_handler_; //!< Function pointer to callback function for timestamping
 };
 
 }; // end namespace

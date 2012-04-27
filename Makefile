@@ -1,33 +1,20 @@
 all: xbow440
 
-install:
-	cd build && make install
-
-uninstall:
-	cd build && make uninstall
-
+.PHONY: xbow440
+ifndef ROS_ROOT
+xbow440: no_ros
+else
 xbow440:
+include $(shell rospack find mk)/cmake.mk
+endif
+
+.PHONY: no_ros
+no_ros:
 	@mkdir -p build
 	-mkdir -p bin
-	cd build && cmake $(CMAKE_FLAGS) ..
+	cd build && cmake -DBUILD_WITH_ROS=OFF ..
 ifneq ($(MAKE),)
 	cd build && $(MAKE)
 else
 	cd build && make
 endif
-
-clean:
-	-cd build && make clean
-	rm -rf build bin lib
-
-.PHONY: test
-test:
-	@mkdir -p build
-	@mkdir -p bin
-	cd build && cmake $(CMAKE_FLAGS) -DXBOW_BUILD_TESTS=1 -DXBOW_BUILD_EXAMPLES=1 ..
-ifneq ($(MAKE),)
-	cd build && $(MAKE)
-else
-	cd build && make
-endif
-

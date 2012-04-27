@@ -16,19 +16,19 @@ void DefaultProcessData(const ImuData& data) {
     std::cout << " Accel Y: " << data.ay << std::endl;
     std::cout << " Accel Z: " << data.az << std::endl;
     std::cout << std::endl;
-};
+}
 
 double DefaultGetTime() {
 	boost::posix_time::ptime present_time(boost::posix_time::microsec_clock::universal_time());
 	boost::posix_time::time_duration duration(present_time.time_of_day());
-	return duration.total_milliseconds();
-};
+	return duration.total_seconds();
+}
 
 XBOW440::XBOW440()
 {	
 	serial_port_=NULL;
 	data_handler_=DefaultProcessData;
-	time_callback_=DefaultGetTime;
+	time_handler_=DefaultGetTime;
 	read_size_=31; // initially set to size of the largest packet
 	reading_status_=false;
 }
@@ -113,7 +113,7 @@ void XBOW440::ReadSerialPort() {
 
 	while (reading_status_) {
 		len = serial_port_->read(buffer, read_size_);
-		imu_data_.receive_time = time_callback_();
+		imu_data_.receive_time = time_handler_();
 
 		// check for header and first of packet type
 		if ((buffer[0]!='U')&&(buffer[1]!='U')&&(buffer[2]!=0x53)) {

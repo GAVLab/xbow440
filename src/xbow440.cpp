@@ -41,7 +41,11 @@ bool XBOW440::Connect(std::string port, int baudrate, long timeout) {
 		delete serial_port_;
 		serial_port_ = NULL;
 		return false;
+	} else {
+		std::cout << "Serial port: " << port << " opened successfully." << std::endl;
+		std::cout << "Searching for IMU..." << std::endl;
 	}
+
 
 	// look for Xbow by sending ping and waiting for response
 	if (!Ping()){
@@ -69,18 +73,22 @@ bool XBOW440::Ping(int numAttempts, long timeout) {
 	// set new timeout
 	serial_port_->setTimeoutMilliseconds(timeout);
 
-	std::string result="";
+	char buffer[1000];
 	size_t found=string::npos;
+	int bytesRead=0;
 
 	// ping the Xbow and wait for a response
 	while (numAttempts-->0){
 		// send ping
 		serial_port_->write("UUPK");
 		// wait for response
-		result=serial_port_->read_until("PK");
+		bytesRead=serial_port_->read(buffer,1000);
+		// convert read data to string
+		std::string buffer_string = "";
+		buffer_string.append(buffer,bytesRead);
 
 		// see if we got a ping response or a timeout
-		found=result.find("PK");
+		found=buffer_string.find("PK");
 		if (found!=string::npos) {
 			serial_port_->setTimeoutMilliseconds(origTimeout);
 			return true;

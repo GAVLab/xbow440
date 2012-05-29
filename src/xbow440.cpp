@@ -67,36 +67,24 @@ void XBOW440::Disconnect() {
 	serial_port_=NULL;
 }
 
-bool XBOW440::Ping(int numAttempts, long timeout) {
-	// get the current timeout period
-	long origTimeout=serial_port_->getTimeoutMilliseconds();
-	// set new timeout
-	serial_port_->setTimeoutMilliseconds(timeout);
+bool XBOW440::Ping(int num_attempts) {
 
-	char buffer[1000];
-	size_t found=string::npos;
-	int bytesRead=0;
+	std::string read_data;
+	size_t found_ping_response=string::npos;
 
 	// ping the Xbow and wait for a response
-	while (numAttempts-->0){
+	while (num_attempts-->0){
 		// send ping
 		serial_port_->write("UUPK");
 		// wait for response
-		bytesRead=serial_port_->read(buffer,1000);
-		// convert read data to string
-		std::string buffer_string = "";
-		buffer_string.append(buffer,bytesRead);
+		serial_port_->read(read_data,1000);
 
 		// see if we got a ping response or a timeout
-		found=buffer_string.find("PK");
-		if (found!=string::npos) {
-			serial_port_->setTimeoutMilliseconds(origTimeout);
+		found_ping_response=read_data.find("PK");
+		if (found_ping_response!=string::npos) {
 			return true;
 		}
 	}
-
-	// reset to original timeout
-	serial_port_->setTimeoutMilliseconds(origTimeout);
 
 	// no reponse found
 	return false;
@@ -113,7 +101,7 @@ void XBOW440::StopReading() {
 }
 
 void XBOW440::ReadSerialPort() {
-	char buffer[31];
+	unsigned char buffer[31];
 	size_t len;
 	double time_stamp;
 
@@ -140,12 +128,12 @@ void XBOW440::Resync() {
 	std::string result="";
 	size_t found=string::npos;
 	bool synced=false;
-	char data[kMaximumMessageSize];
+	unsigned char data[kMaximumMessageSize];
 
 	// make up to 5 attempts to resync
 	for (int ii=0; ii<5; ii++){
 		std::cout << "Resyncing.  Attempt # " << (ii+1) << " of 5." << std::endl;
-		result=serial_port_->read_until("UU");
+		result=serial_port_->readline(1000,"UU");
 		found=result.find("UU");
 		if (found!=string::npos){
 			
@@ -195,7 +183,7 @@ void XBOW440::Resync() {
 	serial_port_->write(msgToSend,7);
 } */
 
-void XBOW440::Parse(char *data, unsigned short packet_type) {
+void XBOW440::Parse(unsigned char *data, unsigned short packet_type) {
     
 	// scale factors for converting raw data
 	static const double kAccelerometerScaleFactorS1 = 0.002992752075195; // scale for m/s^2
@@ -314,6 +302,7 @@ void XBOW440::Parse(char *data, unsigned short packet_type) {
 	    break;
 	default:
 		std::cout << "Unsupported packet type." << std::endl;
+		break;
     }
 
     // call callback with data

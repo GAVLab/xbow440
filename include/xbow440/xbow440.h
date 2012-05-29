@@ -157,7 +157,7 @@ public:
     * 
     * @see xbow440::DataCallback
     */
-    bool Ping(int num_attempts=5, long timeout=100);
+    bool Ping(int num_attempts=5);
 
    /*!
     * Sets the handler to be called when a new data is received.
@@ -220,7 +220,7 @@ private:
     * Parses a packet of data from the IMU.  Scale factors are 
     * also applied to the data to convert into engineering units.
     */
-    void Parse(char *data, unsigned short packet_type);
+    void Parse(unsigned char *data, unsigned short packet_type);
    /*!
     * Calculated a cyclic redundancy check (CRC) on the received
     * data to check for errors in data transmission.

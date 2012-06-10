@@ -225,7 +225,7 @@ private:
     * Calculated a cyclic redundancy check (CRC) on the received
     * data to check for errors in data transmission.
     */    
-    unsigned short CalculateCRC(char* data, int length);
+    unsigned short CalculateCRC(char* data, unsigned int length);
     //void SoftwareReset(); //!< performs a software reset - needed to make changes to settings
 
     //! Serial port object for communicating with sensor

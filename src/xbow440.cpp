@@ -34,7 +34,8 @@ XBOW440::XBOW440()
 }
 
 bool XBOW440::Connect(std::string port, int baudrate, long timeout) {
-	serial_port_ = new serial::Serial(port,baudrate,timeout);
+	serial_port_ = new serial::Serial(port, baudrate,
+									  serial::Timeout::simpleTimeout(timeout));
 
 	if (!serial_port_->isOpen()){
 		std::cout << "Serial port: " << port << " failed to open." << std::endl;
@@ -103,7 +104,7 @@ void XBOW440::StopReading() {
 void XBOW440::ReadSerialPort() {
 	unsigned char buffer[31];
 	size_t len;
-	double time_stamp;
+	// double time_stamp;
 
 	Resync();
 
@@ -358,7 +359,7 @@ void XBOW440::Parse(unsigned char *data, unsigned short packet_type) {
 * num is offset into buffer where to stop CRC calculation
 * RETURNS: 2-byte CRC
 *******************************************************************************/
-unsigned short XBOW440::CalculateCRC(char* data, int length){
+unsigned short XBOW440::CalculateCRC(char* data, unsigned int length){
     unsigned int i = 0, j = 0;
     unsigned short crc = 0x1D0F; //non-augmented inital value equivalent to augmented initial value 0xFFFF
 	// calculate crc on remainder of packet

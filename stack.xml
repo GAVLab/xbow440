@@ -1,9 +1,0 @@
-<stack>
-  <description brief="xbow440">xbow440</description>
-  <author>Maintained by David Hodo</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/xbow440</url>
-  <depend stack="ros" />
-
-</stack>

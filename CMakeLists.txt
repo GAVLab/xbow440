@@ -1,153 +1,193 @@
-cmake_minimum_required(VERSION 2.4.6)
+cmake_minimum_required(VERSION 2.8.3)
+project(xbow440)
 
-set(ROS_ROOT $ENV{ROS_ROOT})
-set(ROS_ROOT_DEFINED FALSE)
-if(DEFINED ROS_ROOT)
-  message("ROS detected.")
-  set(ROS_ROOT_DEFINED TRUE)
-endif(DEFINED ROS_ROOT)
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  sensor_msgs
+  serial
+)
 
-set(BUILD_WITH_ROS ${ROS_ROOT_DEFINED} CACHE BOOL "Build with ROS support.")
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED COMPONENTS thread system)
 
-if(BUILD_WITH_ROS AND NOT ROS_ROOT_DEFINED)
-  message(FATAL_ERROR "ROS support is selected, but ROS_ROOT is not set.")
-endif(BUILD_WITH_ROS AND NOT ROS_ROOT_DEFINED)
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+## Uncomment this if the package has a setup.py. This macro ensures
+## modules and global scripts declared therein get installed
+## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
+# catkin_python_setup()
 
-set(XBOW_LINK_LIBS "")
+################################################
+## Declare ROS messages, services and actions ##
+################################################
 
-if(BUILD_WITH_ROS)
-  include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
-  # Set the build type.  Options are:
-  #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-  #  Debug          : w/ debug symbols, w/o optimization
-  #  Release        : w/o debug symbols, w/ optimization
-  #  RelWithDebInfo : w/ debug symbols, w/ optimization
-  #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-  set(ROS_BUILD_TYPE RelWithDebInfo CACHE STRING "Built type for ROS")
-  rosbuild_init()
+## To declare and build messages, services or actions from within this
+## package, follow these steps:
+## * Let MSG_DEP_SET be the set of packages whose message types you use in
+##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
+## * In the file package.xml:
+##   * add a build_depend tag for "message_generation"
+##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
+##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
+##     but can be declared for certainty nonetheless:
+##     * add a run_depend tag for "message_runtime"
+## * In this file (CMakeLists.txt):
+##   * add "message_generation" and every package in MSG_DEP_SET to
+##     find_package(catkin REQUIRED COMPONENTS ...)
+##   * add "message_runtime" and every package in MSG_DEP_SET to
+##     catkin_package(CATKIN_DEPENDS ...)
+##   * uncomment the add_*_files sections below as needed
+##     and list every .msg/.srv/.action file to be processed
+##   * uncomment the generate_messages entry below
+##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-  #uncomment if you have defined messages
-  #rosbuild_genmsg()
-  #uncomment if you have defined services
-  #rosbuild_gensrv()
-else(BUILD_WITH_ROS)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Built type for cmake")
-  # Find serial, if it hasn't already been found
-  find_package(serial REQUIRED)
+## Generate messages in the 'msg' folder
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
-  if(serial_FOUND)
-    include_directories(${serial_INCLUDE_DIRS})
-    list(APPEND XBOW_LINK_LIBS ${serial_LIBRARIES})
-  else(serial_FOUND)
-    message(FATAL_ERROR "Serial library was not found.")
-  endif(serial_FOUND)
-endif(BUILD_WITH_ROS)
+## Generate services in the 'srv' folder
+# add_service_files(
+#   FILES
+#   Service1.srv
+#   Service2.srv
+# )
 
-# Add the include folder to the include path
-include_directories(${PROJECT_SOURCE_DIR}/include)
+## Generate actions in the 'action' folder
+# add_action_files(
+#   FILES
+#   Action1.action
+#   Action2.action
+# )
 
-# Add default source files
-set(XBOW_SRCS src/xbow440.cpp)
-# Add default header files
-set(XBOW_HEADERS include/xbow440/xbow440.h)
+## Generate added messages and services with any dependencies listed here
+# generate_messages(
+#   DEPENDENCIES
+#   sensor_msgs
+# )
 
-# Find Boost, if it hasn't already been found
-find_package(Boost COMPONENTS thread system REQUIRED)
+################################################
+## Declare ROS dynamic reconfigure parameters ##
+################################################
 
-link_directories(${Boost_LIBRARY_DIRS})
-include_directories(${Boost_INCLUDE_DIRS})
+## To declare and build dynamic reconfigure parameters within this
+## package, follow these steps:
+## * In the file package.xml:
+##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
+## * In this file (CMakeLists.txt):
+##   * add "dynamic_reconfigure" to
+##     find_package(catkin REQUIRED COMPONENTS ...)
+##   * uncomment the "generate_dynamic_reconfigure_options" section below
+##     and list every .cfg file to be processed
 
-list(APPEND XBOW_LINK_LIBS ${Boost_SYSTEM_LIBRARY}
-                           ${Boost_THREAD_LIBRARY})
+## Generate dynamic reconfigure parameters in the 'cfg' folder
+# generate_dynamic_reconfigure_options(
+#   cfg/DynReconf1.cfg
+#   cfg/DynReconf2.cfg
+# )
 
-## Build the xbow Library
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if you package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
+catkin_package(
+ INCLUDE_DIRS include
+ LIBRARIES xbow440
+ CATKIN_DEPENDS roscpp sensor_msgs serial
+ # DEPENDS system_lib
+)
 
-# Compile the Library
-if(BUILD_WITH_ROS)
-  rosbuild_add_library(xbow440 ${XBOW_SRCS} ${XBOW_HEADERS})
-else(BUILD_WITH_ROS)
-  add_library(xbow440 ${XBOW_SRCS} ${XBOW_HEADERS})
-endif(BUILD_WITH_ROS)
-target_link_libraries(xbow440 ${XBOW_LINK_LIBS})
+###########
+## Build ##
+###########
 
-## Build the ROS wrapper
 
-if(BUILD_WITH_ROS)
-  rosbuild_add_executable(xbow440_node src/xbow440_node.cc)
-  target_link_libraries(xbow440_node xbow440)
-endif(BUILD_WITH_ROS)
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+# include_directories(include)
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}/include
+)
 
-## Build Examples
+## Declare a C++ library
+add_library(xbow440
+  src/xbow440.cpp
+)
 
-# If asked to
-IF(XBOW440_BUILD_EXAMPLES)
-    # Compile the atrv Test program
-    add_executable(xbow440_example examples/xbow440_example.cpp)
-    # Link the Test program to the atrv library
-    target_link_libraries(xbow440_example xbow440)
-ENDIF(XBOW440_BUILD_EXAMPLES)
+## Add cmake target dependencies of the library
+## as an example, code may need to be generated before libraries
+## either from message generation or dynamic reconfigure
+# add_dependencies(xbow440 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-## Build tests
+## Declare a C++ executable
+add_executable(xbow440_node src/xbow440_node.cc)
 
-# If asked to
-IF(XBOW440_BUILD_TESTS)
-    # Find Google Test
-    enable_testing()
-    find_package(GTest REQUIRED)
-    include_directories(${GTEST_INCLUDE_DIRS})
+## Add cmake target dependencies of the executable
+## same as for the library above
+# add_dependencies(xbow440_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-    # Compile the atrv Test program
-    add_executable(xbow_tests tests/xbow_tests.cpp)
-    # Link the Test program to the atrv library
-    target_link_libraries(xbow_tests ${GTEST_BOTH_LIBRARIES}
-                          xbow440)
+## Specify libraries to link a library or executable target against
+target_link_libraries(xbow440_node
+  xbow440
+  ${catkin_LIBRARIES}
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_THREAD_LIBRARY}
+)
 
-    add_test(AllTestsIntest_xbow xbow_tests)
-ENDIF(XBOW440_BUILD_TESTS)
+#############
+## Install ##
+#############
 
-## Setup install and uninstall
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
-# Unless asked not to...
-IF(NOT XBOW_DONT_CONFIGURE_INSTALL AND NOT BUILD_WITH_ROS)
-    # Configure make install
-    IF(NOT CMAKE_INSTALL_PREFIX)
-        SET(CMAKE_INSTALL_PREFIX /usr/local)
-    ENDIF(NOT CMAKE_INSTALL_PREFIX)
-    
-    INSTALL(TARGETS xbow440
-      RUNTIME DESTINATION bin
-      LIBRARY DESTINATION lib
-      ARCHIVE DESTINATION lib
-    )
-    
-    INSTALL(FILES include/xbow440/Xbow440.h
-            DESTINATION include/xbow440)
-    
-    IF(NOT CMAKE_FIND_INSTALL_PATH)
-        set(CMAKE_FIND_INSTALL_PATH ${CMAKE_ROOT})
-    ENDIF(NOT CMAKE_FIND_INSTALL_PATH)
-    
-    # INSTALL(FILES Findatrv.cmake DESTINATION ${CMAKE_FIND_INSTALL_PATH}/Modules/)
-    
-    ADD_CUSTOM_TARGET(uninstall @echo uninstall package)
-    
-    IF (UNIX)
-      ADD_CUSTOM_COMMAND(
-        COMMENT "uninstall package"
-        COMMAND xargs ARGS rm < install_manifest.txt
-        
-        TARGET  uninstall
-      )
-    ELSE(UNIX)
-      ADD_CUSTOM_COMMAND(
-        COMMENT "uninstall only implemented in unix"
-        TARGET  uninstall
-      )
-    ENDIF(UNIX)
-ENDIF(NOT XBOW_DONT_CONFIGURE_INSTALL AND NOT BUILD_WITH_ROS)
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
+## Mark executables and/or libraries for installation
+# install(TARGETS xbow440 xbow440_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark cpp header files for installation
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_xbow440.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
+
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)

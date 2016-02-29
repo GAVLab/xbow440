@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(xbow440)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS thread system)
+find_package(Boost REQUIRED COMPONENTS thread system chrono)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -144,6 +144,7 @@ target_link_libraries(xbow440_node
   ${catkin_LIBRARIES}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
+  ${Boost_CHRONO_LIBRARY}
 )
 
 #############

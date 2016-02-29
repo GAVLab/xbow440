@@ -9,3 +9,4 @@ Tested on ROS Indigo/Hydro.
 
 Non-ROS building is no longer enabled. See `CMakeLists.txt.rosbuild` to figure out how to cobble together your own CMakeLists.txt outside of catkin.
 
+!!!  **THIS BRANCH DOES NOT USE ROS TIME. IT USES SYSTEM CLOCK TIME, CONVERTED TO THE ROS TIME REPRESENTATION** !!!

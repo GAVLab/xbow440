@@ -1,7 +1,10 @@
+#include <chrono>
+
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
 
 #include "xbow440/xbow440.h"
+
 using namespace xbow440;
 using std::string;
 
@@ -22,7 +25,12 @@ void PublishImuData(const ImuData& data) {
 }
 
 double GetTime() {
-    return ros::Time::now().toSec();
+    auto now = std::chrono::system_clock::now();
+    auto now_ns = std::chrono::time_point_cast<std::chrono::nanoseconds>(now);
+    auto now_dur_ns = now_ns.time_since_epoch();
+    double nanoseconds = now_dur_ns.count();
+    double seconds = nanoseconds / 1.0e9;
+    return seconds;
 }
 
 int main(int argc, char **argv)

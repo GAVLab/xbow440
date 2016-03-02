@@ -39,7 +39,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "xbow440_node");
   ros::NodeHandle node_handle("~");
 
-  imu_pub = node_handle.advertise<sensor_msgs::Imu>("imu/data", 1);
+  imu_pub = node_handle.advertise<sensor_msgs::Imu>("data", 1);
 
   string port_name;
   node_handle.param("port", port_name, string("/dev/ttyS0"));

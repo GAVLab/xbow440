@@ -247,6 +247,14 @@ private:
     bool reading_status_;  //!< True if the read thread is running, false otherwise.
     DataCallback data_handler_; //!< Function pointer to callback function for parsed data
     GetTimeCallback time_handler_; //!< Function pointer to callback function for timestamping
+
+    // scale factors for converting raw data
+    static const double kAccelerometerScaleFactorS1; // scale for m/s^2
+    static const double kGyroscopeScaleFactorS1; // scale for rad/s
+    static const double kTemperatureScaleFactorS1;
+    static const double kAccelerometerScaleFactorS2;
+    static const double kGyroscopeScaleFactorS2;
+    static const double kGyroscopeScaleFactorA2;
 };
 
 }; // end namespace

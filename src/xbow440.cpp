@@ -5,6 +5,13 @@ using namespace xbow440;
 #define WIN32_LEAN_AND_MEAN 
 #include "boost/date_time/posix_time/posix_time.hpp"
 
+const double XBOW440::kAccelerometerScaleFactorS1 = 0.002992752075195; // scale for m/s^2
+const double XBOW440::kGyroscopeScaleFactorS1 = 0.000335558297349984; // scale for rad/s
+const double XBOW440::kTemperatureScaleFactorS1 = 0.0030517578125;
+const double XBOW440::kAccelerometerScaleFactorS2 = 0.00000004656612873077393;
+const double XBOW440::kGyroscopeScaleFactorS2 = 0.000000005120213277435059;
+const double XBOW440::kGyroscopeScaleFactorA2 = 9.58737992428526e-5;
+
 void DefaultProcessData(const ImuData& data) {
     std::cout << "IMU440 Packet:" << std::endl;
     std::cout << " Timestamp: " << data.receive_time;
@@ -186,13 +193,6 @@ void XBOW440::Resync() {
 
 void XBOW440::Parse(unsigned char *data, unsigned short packet_type) {
     
-	// scale factors for converting raw data
-	static const double kAccelerometerScaleFactorS1 = 0.002992752075195; // scale for m/s^2
-	static const double kGyroscopeScaleFactorS1 = 0.000335558297349984; // scale for rad/s
-	static const double kTemperatureScaleFactorS1 = 0.0030517578125;
-	static const double kAccelerometerScaleFactorS2 = 0.00000004656612873077393;
-	static const double kGyroscopeScaleFactorS2 = 0.000000005120213277435059;
-
 	// TODO: check CRC
 
     switch (packet_type) {

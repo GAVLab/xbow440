@@ -125,8 +125,18 @@ void XBOW440::ReadSerialPort() {
 			continue;
 		}
 
-		// parse packet
-		Parse(buffer+5, buffer[3]);
+		switch (buffer[2]) {
+			case 'S':
+				// parse packet
+				ParseS(buffer+5, buffer[3]);
+				break;
+			case 'A':
+				ParseA(buffer+5, buffer[3]);
+				break;
+			default:
+				std::cout << "Unsupported packet type." << std::endl;
+				break;
+		}
 	}
 
 }
@@ -191,7 +201,7 @@ void XBOW440::Resync() {
 	serial_port_->write(msgToSend,7);
 } */
 
-void XBOW440::Parse(unsigned char *data, unsigned short packet_type) {
+void XBOW440::ParseS(unsigned char *data, unsigned short packet_type) {
     
 	// TODO: check CRC
 
@@ -310,6 +320,92 @@ void XBOW440::Parse(unsigned char *data, unsigned short packet_type) {
     if (data_handler_!=NULL)
     	data_handler_(imu_data_);
     
+}
+
+void XBOW440::ParseA(unsigned char *data, unsigned short packet_type) {
+	switch (packet_type) {
+	case 0x32: //A2 Payload
+		// roll angle
+		s1contents.cdata[0] = data[1];
+		s1contents.cdata[1] = data[0];
+		imu_data_.ax = s1contents.ssdata*kGyroscopeScaleFactorA2;
+
+		// pitch angle
+		s1contents.cdata[0] = data[3];
+		s1contents.cdata[1] = data[2];
+		imu_data_.ay = s1contents.ssdata*kGyroscopeScaleFactorA2;
+
+		// yaw angle true
+		s1contents.cdata[0] = data[5];
+		s1contents.cdata[1] = data[4];
+		imu_data_.az = s1contents.ssdata*kGyroscopeScaleFactorA2;
+
+		// x rate corrected (rad)
+		s1contents.cdata[0] = data[7];
+		s1contents.cdata[1] = data[6];
+		imu_data_.rollrate = s1contents.ssdata*kGyroscopeScaleFactorS1;
+
+		// y rate corrected (rad)
+		s1contents.cdata[0] = data[9];
+		s1contents.cdata[1] = data[8];
+		imu_data_.pitchrate = s1contents.ssdata*kGyroscopeScaleFactorS1;
+
+		// z rate corrected (rad)
+		s1contents.cdata[0] = data[11];
+		s1contents.cdata[1] = data[10];
+		imu_data_.yawrate = s1contents.ssdata*kGyroscopeScaleFactorS1;
+
+		// x accel (m/s)
+		s1contents.cdata[0] = data[13];
+		s1contents.cdata[1] = data[12];
+		imu_data_.ax = s1contents.ssdata*kAccelerometerScaleFactorS1;
+
+		// y accel (m/s)
+		s1contents.cdata[0] = data[15];
+		s1contents.cdata[1] = data[14];
+		imu_data_.ay = s1contents.ssdata*kAccelerometerScaleFactorS1;
+
+		// z accel (m/s)
+		s1contents.cdata[0] = data[17];
+		s1contents.cdata[1] = data[16];
+		imu_data_.az = s1contents.ssdata*kAccelerometerScaleFactorS1;
+
+		// x rate temp (degC)
+		s1contents.cdata[0] = data[19];
+		s1contents.cdata[1] = data[18];
+		imu_data_.xtemp = s1contents.ssdata*kTemperatureScaleFactorS1;
+
+		// y rate temp (degC)
+		s1contents.cdata[0] = data[21];
+		s1contents.cdata[1] = data[20];
+		imu_data_.ytemp = s1contents.ssdata*kTemperatureScaleFactorS1;
+
+		// z rate temp (degC)
+		s1contents.cdata[0] = data[23];
+		s1contents.cdata[1] = data[22];
+		imu_data_.ztemp = s1contents.ssdata*kTemperatureScaleFactorS1;
+
+		// time ITOW (ms)
+		s2contents.cdata[0] = data[27];
+		s2contents.cdata[1] = data[26];
+		s2contents.cdata[2] = data[25];
+		s2contents.cdata[3] = data[24];
+		imu_data_.counter = s2contents.usdata;
+
+		// bit status
+		s1contents.cdata[0] = data[29];
+		s1contents.cdata[1] = data[28];
+		imu_data_.bitstatus = s1contents.usdata;
+
+		break;
+	default:
+		std::cout << "Unsupported packet type." << std::endl;
+		break;
+	}
+
+	// call callback with data
+	if (data_handler_!=NULL)
+		data_handler_(imu_data_);
 }
 
 /*bool XBOW440::SetOutputRate(unsigned short rate) {

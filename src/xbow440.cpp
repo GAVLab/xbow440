@@ -328,17 +328,17 @@ void XBOW440::ParseA(unsigned char *data, unsigned short packet_type) {
 		// roll angle
 		s1contents.cdata[0] = data[1];
 		s1contents.cdata[1] = data[0];
-		imu_data_.ax = s1contents.ssdata*kGyroscopeScaleFactorA2;
+		imu_data_.roll = s1contents.ssdata*kGyroscopeScaleFactorA2;
 
 		// pitch angle
 		s1contents.cdata[0] = data[3];
 		s1contents.cdata[1] = data[2];
-		imu_data_.ay = s1contents.ssdata*kGyroscopeScaleFactorA2;
+		imu_data_.pitch = s1contents.ssdata*kGyroscopeScaleFactorA2;
 
 		// yaw angle true
 		s1contents.cdata[0] = data[5];
 		s1contents.cdata[1] = data[4];
-		imu_data_.az = s1contents.ssdata*kGyroscopeScaleFactorA2;
+		imu_data_.yaw = s1contents.ssdata*kGyroscopeScaleFactorA2;
 
 		// x rate corrected (rad)
 		s1contents.cdata[0] = data[7];

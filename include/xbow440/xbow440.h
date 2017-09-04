@@ -82,6 +82,9 @@ struct ImuData {
     double rollrate; //1:rad/s 2:rad
     double pitchrate; //1:rad/s 2:rad
     double yawrate; //1:rad/s 2:rad
+    double roll; //rad
+    double pitch; //rad
+    double yaw; //rad
     double xtemp; //degC
     double ytemp; //degC
     double ztemp; //degC

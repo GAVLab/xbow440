@@ -1,5 +1,7 @@
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 #include "xbow440/xbow440.h"
 using namespace xbow440;
@@ -18,6 +20,9 @@ void PublishImuData(const ImuData& data) {
     msg.linear_acceleration.x = data.ax;
     msg.linear_acceleration.y = data.ay;
     msg.linear_acceleration.z = data.az;
+    tf2::Quaternion q;
+    q.setRPY(data.roll, data.pitch, data.yaw);
+    msg.orientation = tf2::toMsg(q);
     imu_pub.publish(msg);
 }
 

@@ -33,7 +33,7 @@ int main(int argc, char **argv)
   imu_pub = node_handle.advertise<sensor_msgs::Imu>("imu/data", 1);
 
   string port_name;
-  node_handle.param("port", port_name, string("/dev/ttyS0"));
+  node_handle.param("port", port_name, string("/dev/ttyUSB0"));
   int baudrate;
   node_handle.param<int>("baudrate", baudrate, 57600);
   node_handle.param<string>("frame_id", frame_id, string("imu_frame"));

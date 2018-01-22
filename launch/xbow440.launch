@@ -1,0 +1,7 @@
+<launch>
+  <node name="xbow440" pkg="xbow440" type="xbow440_node" output="screen" required="true">
+  	<param name="port" value="/dev/ttyS0" />
+    <param name="baudrate" value="57600" />
+    
+  </node>
+ </launch>

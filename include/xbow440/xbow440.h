@@ -82,12 +82,19 @@ struct ImuData {
     double rollrate; //1:rad/s 2:rad
     double pitchrate; //1:rad/s 2:rad
     double yawrate; //1:rad/s 2:rad
+    double roll; //rad
+    double pitch; //rad
+    double yaw; //rad
     double xtemp; //degC
     double ytemp; //degC
     double ztemp; //degC
     double boardtemp; //degC
     unsigned short counter; //packets
     unsigned short bitstatus;
+
+    double rollangle; // rad (only VG and higher)
+    double pitchangle; // rad (only VG and higher)
+    double yawangle; // rad (only VG and higher)
 };
 
 
@@ -206,7 +213,7 @@ private:
     * serial port.  When a complete packet is received, the parse 
     * method is called to process the data
     * 
-    * @see xbow440::XBOW440::Parse, xbow440::XBOW440::StartReading, xbow440::XBOW440::StopReading
+    * @see xbow440::XBOW440::ParseS, xbow440::XBOW440::StartReading, xbow440::XBOW440::StopReading
     */    
     void ReadSerialPort();
 
@@ -220,7 +227,13 @@ private:
     * Parses a packet of data from the IMU.  Scale factors are 
     * also applied to the data to convert into engineering units.
     */
-    void Parse(unsigned char *data, unsigned short packet_type);
+    void ParseS(unsigned char *data, unsigned short packet_type);
+   /*!
+    * Parses an 'A' packet of data from the IMU.  Scale factors are 
+    * also applied to the data to convert into engineering units.
+    * 'A2' are only sent by the VG, AHRS, NAV series.
+    */
+    void ParseA(unsigned char *data, unsigned short packet_type);
    /*!
     * Calculated a cyclic redundancy check (CRC) on the received
     * data to check for errors in data transmission.
@@ -247,6 +260,14 @@ private:
     bool reading_status_;  //!< True if the read thread is running, false otherwise.
     DataCallback data_handler_; //!< Function pointer to callback function for parsed data
     GetTimeCallback time_handler_; //!< Function pointer to callback function for timestamping
+
+    // scale factors for converting raw data
+    static const double kAccelerometerScaleFactorS1; // scale for m/s^2
+    static const double kGyroscopeScaleFactorS1; // scale for rad/s
+    static const double kTemperatureScaleFactorS1;
+    static const double kAccelerometerScaleFactorS2;
+    static const double kGyroscopeScaleFactorS2;
+    static const double kGyroscopeScaleFactorA2;
 };
 
 }; // end namespace
